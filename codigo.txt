@@ -8,5 +8,20 @@ int funcion(float v, string n){
  return n
 }
 
-int y = funcion(30, "hola")
-int funcion = 23
+int y = funcion(30, 20)
+
+int suma(int a, int b){
+  sum = a + b
+  return sum
+}
+
+int sumita = 0
+sumita = suma(5, 2)
+
+void tigre(float e){
+   while(e == 10.5){
+    e = 20
+   }
+}
+
+tigre(10.5)

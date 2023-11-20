@@ -183,7 +183,10 @@ class Analizador:
             if(pal in self.tablita.tabla):
                 tipo = self.tablita.tabla[pal]
                 try:
-                    if(tipo == "int"):
+                    if(palabra[2] in self.tablita.tabla):
+                        if(tipo != self.tablita.tabla[palabra[2]]):
+                            raise
+                    elif(tipo == "int"):
                         i = int(palabra[2])
                     elif(tipo == "float"):
                         i = float(palabra[2])
@@ -221,7 +224,7 @@ class Analizador:
         pal = palabra[0]
         if(pal in self.tablita.tabla):
             tipo = self.tablita.tabla[pal][0]
-            if(tipo == "int" or "float"):
+            if(tipo == "int" or tipo == "float"):
                 try:
                     for i in range (1, len(palabra)):
                         if(palabra[i] in self.tablita.tabla):
@@ -255,12 +258,26 @@ class Analizador:
         pal = palabra[0]
         if(pal in self.tablita.tabla):
             tipo = self.tablita.tabla[pal]
-            if(tipo == "int" or "float" or "string"):
+            if(tipo == "int" or tipo == "float" or tipo == "string"):
                 try:
-                    if(palabra[1] in self.tablita.tabla):
+                    p = palabra[1:]
+                    if(p[0] in self.tablita.tabla or palabra[1] in self.tablita.tabla):
                         tipo2 = self.tablita.tabla[palabra[1]]
+                        if(tipo2 != tipo):
+                            raise
                         if(tipo2 != "int" and tipo2 != "float" and tipo2 != "string"):
                             raise
+                        else:
+                            if(p[0] in self.tabla_funciones.tabla):
+                                params = self.tabla_funciones.tabla[p[0]]
+                                vals = p[1:]
+                            if(len(params) != len(vals)):
+                                self.error.error_argumentos(numLinea, p[0])
+                            else:
+                                for i in range (0, len(params)):
+                                    if(self.tipo_dato(params[i], vals[i]) == False):
+                                        self.error.error_parametro(numLinea, p[0])
+                                        break
                     elif(tipo == "string"):
                         if(palabra[1].count('"') != 2):
                             raise
@@ -311,7 +328,8 @@ class Analizador:
                         f = float(val)
                     except:
                         if(val.count('"') != 2):
-                            self.error.error_no_declarado(numLinea, self.funcion)
+                            self.error.error_no_declarado(numLinea, val)
+                            return
                         else:
                             raise
                     if(tipo == "int"):
@@ -337,7 +355,34 @@ class Analizador:
         vec = self.pila.eliminar()
         for i in vec:
             del self.tablita.tabla[i]
-            
+
+    '''
+    Nombre de la funcion: llamar_funcion_void
+    
+    Parametros que recibe: linea del archivo de texto y numero de linea
+    
+    Parametros que retorna: Ninguno
+    
+    Proceso que realiza la funcion: 
+    Esta función se encarga de revisar que al llamar una funcion, tanto que la cantidad
+    de argumentos corresponda como que los parametros coincida con los que recibe la funcion
+    
+    '''
+    
+    def llamar_funcion_void(self, linea, numLinea):
+        palabra = linea.split()
+        if(palabra[0] in self.tabla_funciones.tabla):
+            params = self.tabla_funciones.tabla[palabra[0]]
+            vals = palabra[1:]
+            if(len(params) != len(vals)):
+                self.error.error_argumentos(numLinea, palabra[0])
+            else:
+                for i in range (0, len(params)):
+                    if(self.tipo_dato(params[i], vals[i]) == False):
+                        self.error.error_parametro(numLinea, palabra[0])
+                        break
+        
+        
     '''
     Nombre de la funcion: leer_Archivo
     
@@ -373,6 +418,8 @@ class Analizador:
                 elif('(' in linea and ')' in linea):
                     if(lin2[0] == "if" or lin2[0] == "while"):
                         self.funcion_reservadas(lin, n)
+                    elif(lin2[0] != "int" and lin2[0] != "string" and lin2[0] != "float" and lin2[0] != "void"):
+                        self.llamar_funcion_void(lin, n)
                     else:
                         self.funciones(lin, n)
                 elif('=' in linea):
@@ -385,6 +432,5 @@ class Analizador:
                 n+=1
         print(f"\nErrores -> [{self.error.cant}]")
         if(self.error.cant == 0):
-            print("El codigo se ha compilado correctamente!")
-        self.tablita.mostrar_tabla()
+            print("El codigo se ha compilado correctamente!\n")
 
